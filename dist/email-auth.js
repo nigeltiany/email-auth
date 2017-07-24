@@ -123,7 +123,11 @@ var EmailAuth = function () {
           return Promise.reject(error);
         });
       } else {
-        return firebase.auth().signInWithEmailAndPassword(email, password);
+        return new Promise(function (resolve, reject) {
+          firebase.auth().signInWithEmailAndPassword(email, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
+            reject(error);
+          });
+        });
       }
     }
   }, {
@@ -147,7 +151,11 @@ var EmailAuth = function () {
           return Promise.reject(error);
         });
       } else {
-        return firebase.auth().createUserWithEmailAndPassword(email, password);
+        return new Promise(function (resolve, reject) {
+          firebase.auth().createUserWithEmailAndPassword(email, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
+            reject(error);
+          });
+        });
       }
     }
   }]);
