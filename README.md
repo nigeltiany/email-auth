@@ -63,4 +63,75 @@ this.$firebase.emailSignUp('<USER_EMAIL>', '<USER_PASSWORD>', function(error, us
 })
 ```
 
+### Vuex Usage
+
+```js
+Vue.use(VueFire, {
+    project: {
+        apiKey: "<API_KEY>",
+        authDomain: "<PROJECT_ID>.firebaseapp.com",
+        databaseURL: "https://<DATABASE_NAME>.firebaseio.com",
+        storageBucket: "<BUCKET>.appspot.com",
+        messagingSenderId: "<SENDER_ID>",
+        projectId: '<PROJECT_ID>',
+    },
+    mixins: [{
+        vuex: true,
+        sources: [VueFire_Email_Auth]
+    }]
+})
+
+// In components
+export default {
+    data () {
+      return {
+        user: {
+          email: null,
+          password: null,
+          // Mutation to commit when/if login/signup is successful
+          mutate: 'authentication/authenticatedUser',
+          // Firebase path to save user. Defaults to 'users/'
+          firebasePath: 'users/',
+          // Function to call on validation error
+          error: this.error
+        }
+      }
+    },
+    methods: {
+      ...mapActions('authentication', [
+        'emailSignUp',
+        'emailSignIn'
+      ]),
+      error (error) {
+        // console.log(error)
+        // Or show toast message
+      }
+    }
+}
+
+// Vuex example
+export default {
+
+  namespaced: true,
+
+  state: {
+    user: JSON.parse(localStorage.getItem('user')) || {}
+  },
+
+  getters: {
+    authUser (state) {
+      return state.user
+    }
+  },
+
+  mutations: {
+    authenticatedUser (state, authenticatedUser) {
+      Object.assign(state.user, authenticatedUser)
+      router.push({ path: '/' })
+      localStorage.setItem('user', JSON.stringify(authenticatedUser))
+    }
+  }
+}
+```
+
 See [VueFire](https://github.com/nigeltiany/vuefire) Package Documentation on how to use mixins

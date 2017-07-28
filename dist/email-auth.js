@@ -97,65 +97,99 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var saveUser = function saveUser() {
+  var path = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'users/';
+  var user = arguments[1];
+
+  database().ref(path).set(user);
+};
+
+var invokeMutation = function invokeMutation(mutation) {
+  try {
+    _mutations[mutation][0](firebase.auth().currentUser);
+  } catch (e) {
+    var namespace = _mutation.split('/')[0];
+    var _mutation = _mutation.split('/')[1] || _mutation;
+    throw new Error('No mutation named ' + _mutation + 'in the ' + (_mutation.split('/')[1] ? namespace : 'global') + ' vuex namespace');
+  }
+};
+
 var EmailAuth = function () {
   function EmailAuth() {
     _classCallCheck(this, EmailAuth);
   }
 
   _createClass(EmailAuth, [{
-    key: "emailSignIn",
-    value: function emailSignIn(_ref, email, password, action) {
+    key: 'emailSignIn',
+    value: function emailSignIn(_ref, user, password, action) {
       var firebase = _ref.firebase,
+          database = _ref.database,
           _mutations = _ref._mutations;
 
       if (typeof action === "function") {
-        firebase.auth().signInWithEmailAndPassword(email, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
-      } else if ((typeof action === "undefined" ? "undefined" : _typeof(action)) === "object" && action.mutate) {
-        firebase.auth().signInWithEmailAndPassword(email, password).then(function () {
-          try {
-            _mutations[action.mutation][0](firebase.auth().currentUser);
-          } catch (e) {
-            var namespace = action.split('/')[0];
-            var mutation = action.split('/')[1] || action.mutate;
-            throw new Error('No mutation named ' + mutation + 'in the ' + (action.split('/')[1] ? namespace : 'global') + ' vuex namespace');
+        firebase.auth().signInWithEmailAndPassword(user, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
+      } else if ((typeof action === 'undefined' ? 'undefined' : _typeof(action)) === "object") {
+        firebase.auth().signInWithEmailAndPassword(user, password).then(function () {
+          if (action.mutate) {
+            invokeMutation(action.mutate);
           }
         }).catch(function (error) {
           return Promise.reject(error);
         });
       } else {
-        return new Promise(function (resolve, reject) {
-          firebase.auth().signInWithEmailAndPassword(email, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
-            reject(error);
+        // For Vuex
+        if ((typeof user === 'undefined' ? 'undefined' : _typeof(user)) === "object") {
+          firebase.auth().signInWithEmailAndPassword(user.email, user.password).then(function () {
+            if (user.mutate) {
+              invokeMutation(user.mutate);
+            }
+          }).catch(function (error) {
+            return Promise.reject(error);
           });
-        });
+        } else {
+          return new Promise(function (resolve, reject) {
+            firebase.auth().signInWithEmailAndPassword(user, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
+              reject(error);
+            });
+          });
+        }
       }
     }
   }, {
-    key: "emailSignUp",
-    value: function emailSignUp(_ref2, email, password, action) {
+    key: 'emailSignUp',
+    value: function emailSignUp(_ref2, user, password, action) {
       var firebase = _ref2.firebase,
           _mutations = _ref2._mutations;
 
       if (typeof action === "function") {
-        firebase.auth().createUserWithEmailAndPassword(email, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
-      } else if ((typeof action === "undefined" ? "undefined" : _typeof(action)) === "object" && action.mutate) {
-        firebase.auth().createUserWithEmailAndPassword(email, password).then(function () {
-          try {
-            _mutations[action.mutation][0](firebase.auth().currentUser);
-          } catch (e) {
-            var namespace = action.split('/')[0];
-            var mutation = action.split('/')[1] || action.mutate;
-            throw new Error('No mutation named ' + mutation + 'in the ' + (action.split('/')[1] ? namespace : 'global') + ' vuex namespace');
+        firebase.auth().createUserWithEmailAndPassword(user, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
+      } else if ((typeof action === 'undefined' ? 'undefined' : _typeof(action)) === "object") {
+        firebase.auth().createUserWithEmailAndPassword(user, password).then(function () {
+          if (action.mutate) {
+            invokeMutation(action.mutate);
           }
         }).catch(function (error) {
           return Promise.reject(error);
         });
       } else {
-        return new Promise(function (resolve, reject) {
-          firebase.auth().createUserWithEmailAndPassword(email, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
-            reject(error);
+        // For Vuex
+        if ((typeof user === 'undefined' ? 'undefined' : _typeof(user)) === "object") {
+          firebase.auth().createUserWithEmailAndPassword(user.email, user.password).then(function () {
+            if (user.mutate) {
+              invokeMutation(user.mutate);
+            }
+            console.log(firebase.auth().currentUser);
+            //saveUser(Object.create(user, ))
+          }).catch(function (error) {
+            return Promise.reject(error);
           });
-        });
+        } else {
+          return new Promise(function (resolve, reject) {
+            firebase.auth().createUserWithEmailAndPassword(user, password).then(resolve(firebase.auth().currentUser)).catch(function (error) {
+              reject(error);
+            });
+          });
+        }
       }
     }
   }]);
