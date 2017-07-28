@@ -1,6 +1,6 @@
 {
   "name": "@vuefire/email-auth",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Firebase for vuejs",
   "main": "dist/email-auth.js",
   "scripts": {

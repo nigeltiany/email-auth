@@ -97,30 +97,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var saveUser = function saveUser() {
-  var path = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'users/';
-  var user = arguments[1];
-
-  database().ref(path).set(user);
-};
-
-var invokeMutation = function invokeMutation(mutation) {
-  try {
-    _mutations[mutation][0](firebase.auth().currentUser);
-  } catch (e) {
-    var namespace = _mutation.split('/')[0];
-    var _mutation = _mutation.split('/')[1] || _mutation;
-    throw new Error('No mutation named ' + _mutation + 'in the ' + (_mutation.split('/')[1] ? namespace : 'global') + ' vuex namespace');
-  }
-};
-
 var EmailAuth = function () {
   function EmailAuth() {
     _classCallCheck(this, EmailAuth);
   }
 
   _createClass(EmailAuth, [{
-    key: 'emailSignIn',
+    key: "emailSignIn",
     value: function emailSignIn(_ref, user, password, action) {
       var firebase = _ref.firebase,
           database = _ref.database,
@@ -128,23 +111,26 @@ var EmailAuth = function () {
 
       if (typeof action === "function") {
         firebase.auth().signInWithEmailAndPassword(user, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
-      } else if ((typeof action === 'undefined' ? 'undefined' : _typeof(action)) === "object") {
+      } else if ((typeof action === "undefined" ? "undefined" : _typeof(action)) === "object") {
         firebase.auth().signInWithEmailAndPassword(user, password).then(function () {
           if (action.mutate) {
-            invokeMutation(action.mutate);
+            EmailAuth.invokeMutation(firebase, action.mutate);
           }
         }).catch(function (error) {
           return Promise.reject(error);
         });
       } else {
         // For Vuex
-        if ((typeof user === 'undefined' ? 'undefined' : _typeof(user)) === "object") {
+        if ((typeof user === "undefined" ? "undefined" : _typeof(user)) === "object") {
           firebase.auth().signInWithEmailAndPassword(user.email, user.password).then(function () {
             if (user.mutate) {
-              invokeMutation(user.mutate);
+              EmailAuth.invokeMutation(firebase, _mutations, user.mutate);
             }
           }).catch(function (error) {
-            return Promise.reject(error);
+            if (!user.error || typeof user.error !== 'function') {
+              return Promise.reject(error);
+            }
+            user.error(error);
           });
         } else {
           return new Promise(function (resolve, reject) {
@@ -156,32 +142,36 @@ var EmailAuth = function () {
       }
     }
   }, {
-    key: 'emailSignUp',
+    key: "emailSignUp",
     value: function emailSignUp(_ref2, user, password, action) {
       var firebase = _ref2.firebase,
+          database = _ref2.database,
           _mutations = _ref2._mutations;
+
 
       if (typeof action === "function") {
         firebase.auth().createUserWithEmailAndPassword(user, password).then(action(null, firebase.auth().currentUser)).catch(action(error));
-      } else if ((typeof action === 'undefined' ? 'undefined' : _typeof(action)) === "object") {
+      } else if ((typeof action === "undefined" ? "undefined" : _typeof(action)) === "object") {
         firebase.auth().createUserWithEmailAndPassword(user, password).then(function () {
           if (action.mutate) {
-            invokeMutation(action.mutate);
+            EmailAuth.invokeMutation(firebase, action.mutate);
           }
         }).catch(function (error) {
           return Promise.reject(error);
         });
       } else {
         // For Vuex
-        if ((typeof user === 'undefined' ? 'undefined' : _typeof(user)) === "object") {
+        if ((typeof user === "undefined" ? "undefined" : _typeof(user)) === "object") {
           firebase.auth().createUserWithEmailAndPassword(user.email, user.password).then(function () {
             if (user.mutate) {
-              invokeMutation(user.mutate);
+              EmailAuth.invokeMutation(firebase, _mutations, user.mutate);
             }
-            console.log(firebase.auth().currentUser);
-            //saveUser(Object.create(user, ))
+            EmailAuth.saveUser(user.firebasePath, user, firebase.auth().currentUser, database);
           }).catch(function (error) {
-            return Promise.reject(error);
+            if (!user.error || typeof user.error !== 'function') {
+              return Promise.reject(error);
+            }
+            user.error(error);
           });
         } else {
           return new Promise(function (resolve, reject) {
@@ -191,6 +181,43 @@ var EmailAuth = function () {
           });
         }
       }
+    }
+  }], [{
+    key: "invokeMutation",
+    value: function invokeMutation(firebase, _mutations, mutation) {
+      _mutations[mutation][0](firebase.auth().currentUser);
+      // try {
+      //   _mutations[mutation][0](firebase.auth().currentUser)
+      // }catch (e) {
+      //   console.log(mutation)
+      //   let namespace = mutation.split('/')[0]
+      //   let mutation = mutation.split('/')[1] || mutation
+      //   throw new Error('No mutation named ' + mutation + 'in the ' + ((mutation.split('/')[1]) ? namespace : 'global') + ' vuex namespace')
+      // }
+    }
+  }, {
+    key: "saveUser",
+    value: function saveUser() {
+      var path = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'users/';
+      var formData = arguments[1];
+      var user = arguments[2];
+      var database = arguments[3];
+
+      delete formData.password;
+      delete formData.error;
+      delete formData.firebasePath;
+      database().ref(path + user.uid).set(Object.assign(formData, {
+        displayName: user.displayName,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        isAnoymous: user.isAnonymous,
+        phoneNumber: user.phoneNumber,
+        photoURL: user.photoURL,
+        providerData: user.providerData,
+        providerId: user.providerId,
+        refreshToken: user.refreshToken,
+        uid: user.uid
+      }));
     }
   }]);
 
